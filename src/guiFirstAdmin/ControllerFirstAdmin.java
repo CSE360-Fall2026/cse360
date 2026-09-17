@@ -4,6 +4,9 @@ import java.sql.SQLException;
 import database.Database;
 import entityClasses.User;
 import javafx.stage.Stage;
+import inputValidation.UserNameRecognizer;
+import inputValidation.PasswordRecognizer;
+import javafx.scene.paint.Color;
 
 /*******
  * <p> Title: ControllerFirstAdmin Class. </p>
@@ -78,6 +81,42 @@ public class ControllerFirstAdmin {
 	protected static void setAdminPassword1() {
 		adminPassword1 = ViewFirstAdmin.text_AdminPassword1.getText();
 		ViewFirstAdmin.label_PasswordsDoNotMatch.setText("");
+		
+		ViewFirstAdmin.resetAssessments();
+		
+		// If input is empty, leave them red and return
+		if (adminPassword1.isEmpty()) {
+			return;
+		}
+
+		// Evaluate the password to populate the flags
+		PasswordRecognizer.evaluatePassword(adminPassword1);
+
+		// Check flags - turn satisfied items green
+		if (PasswordRecognizer.foundUpperCase) {
+			ViewFirstAdmin.label_UpperCase.setText("At least one upper case letter - Satisfied");
+			ViewFirstAdmin.label_UpperCase.setTextFill(Color.GREEN);
+		}
+
+		if (PasswordRecognizer.foundLowerCase) {
+			ViewFirstAdmin.label_LowerCase.setText("At least one lower case letter - Satisfied");
+			ViewFirstAdmin.label_LowerCase.setTextFill(Color.GREEN);
+		}
+
+		if (PasswordRecognizer.foundNumericDigit) {
+			ViewFirstAdmin.label_NumericDigit.setText("At least one numeric digit - Satisfied");
+			ViewFirstAdmin.label_NumericDigit.setTextFill(Color.GREEN);
+		}
+
+		if (PasswordRecognizer.foundSpecialChar) {
+			ViewFirstAdmin.label_SpecialChar.setText("At least one special character - Satisfied");
+			ViewFirstAdmin.label_SpecialChar.setTextFill(Color.GREEN);
+		}
+
+		if (PasswordRecognizer.foundLongEnough) {
+			ViewFirstAdmin.label_LongEnough.setText("At least eight characters - Satisfied");
+			ViewFirstAdmin.label_LongEnough.setTextFill(Color.GREEN);
+		}
 	}
 	
 	
@@ -103,6 +142,21 @@ public class ControllerFirstAdmin {
 	 * 
 	 */
 	protected static void doSetupAdmin(Stage ps, int r) {
+		
+		// Check that username is valid
+		String userErr = UserNameRecognizer.checkForValidUserName(adminUsername);
+		if (!userErr.isEmpty()) {
+			ViewFirstAdmin.label_PasswordsDoNotMatch.setText(userErr);
+			return; // Error occurred with username, stop from continuing
+		}
+
+		// Check that password is valid
+		String passErr = PasswordRecognizer.evaluatePassword(adminPassword1);
+		if (!passErr.isEmpty()) {
+			ViewFirstAdmin.label_PasswordsDoNotMatch.setText(passErr);
+			return; // Error occurred with password, stop from continuing
+		}
+		
 		
 		// Make sure the two passwords are the same
 		if (adminPassword1.compareTo(adminPassword2) == 0) {
