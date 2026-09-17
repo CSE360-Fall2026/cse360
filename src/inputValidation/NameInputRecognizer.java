@@ -74,18 +74,20 @@ public class NameInputRecognizer {
 	 * 
 	 * @param input		The input string for the Finite State Machine
 	 * @param fieldName The name of the field (e.g., "First Name", "Last Name")
+	 * @param required	Check if the field input is required (true) or can remain empty (false)
 	 * @return			Empty string if valid, or a descriptive error message if invalid
 	 */
-	public static String checkForValidName(String input, String fieldName) {
-		if (input == null) {
-			nameRecognizerIndexofError = 0;
-			return fieldName + " cannot be empty.";
-		}
-
-		// Check to ensure that there is input to process
-		if (input.length() <= 0) {
-			nameRecognizerIndexofError = 0;
-			return fieldName + " cannot be empty or blank.";
+	public static String checkForValidName(String input, String fieldName, boolean required) {
+		// Check if null, empty, or whitespace
+		if (input == null || input.trim().isEmpty()) {
+			if(required) {
+				nameRecognizerIndexofError = 0;
+				return fieldName + " cannot be empty or blank.";
+			}
+		} else {
+			nameRecognizerIndexofError = -1;
+			nameRecognizerErrorMessage = "";
+			return "";
 		}
 		
 		// The local variables used to perform the Finite State Machine simulation
@@ -212,4 +214,15 @@ public class NameInputRecognizer {
 			return "Invalid input format for " + fieldName + ".";
 		}
 	}
+	
+		/**********
+		 * Overloaded method for backward compatibility (default to required as false)
+		 * 
+		 * @param input     The input string for the Finite State Machine
+		 * @param fieldName The name of the field (e.g., "First Name", "Last Name")
+		 * @return          Empty string if valid, or a descriptive error message if invalid
+		 */
+		public static String checkForValidName(String input, String fieldName) {
+			return checkForValidName(input, fieldName, false);
+		}
 }
