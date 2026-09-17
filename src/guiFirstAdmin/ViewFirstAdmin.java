@@ -11,6 +11,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.scene.Scene;
+import javafx.scene.paint.Color;
 
 
 /*******
@@ -73,6 +74,16 @@ public class ViewFirstAdmin {
 	private static Pane theRootPane;
 	private static Scene theFirstAdminScene = null;
 	private static final int theRole = 1;		// Admin: 1; Role1: 2; Role2: 3
+	
+	// Password checklist
+	static protected Label validPassword = new Label();		// This only appears with a valid password
+	static protected Label label_Requirements = 
+    		new Label("Password requirements:");
+	static protected Label label_UpperCase = new Label();		// These empty labels change based on the
+	static protected Label label_LowerCase = new Label();		// user's input
+	static protected Label label_NumericDigit = new Label();	
+	static protected Label label_SpecialChar = new Label();
+	static protected Label label_LongEnough = new Label();
 		
 	
 	/*-********************************************************************************************
@@ -93,8 +104,7 @@ public class ViewFirstAdmin {
 	 * 
 	 * @param ps specifies the JavaFX Stage to be used for this GUI and it's methods
 	 */
-	public static void displayFirstAdmin(Stage ps) {
-		
+	public static void displayFirstAdmin(Stage ps) {		
 		// Establish the references to the GUI.  There is no user yet.
 		theStage = ps;			// Establish a reference to the JavaFX Stage
 		
@@ -181,18 +191,62 @@ public class ViewFirstAdmin {
 			});
 
 		// Label to display the Passwords do not match error message
-		setupLabelUI(label_PasswordsDoNotMatch, "Arial", 18, width, Pos.CENTER, 0, 300);
+		setupLabelUI(label_PasswordsDoNotMatch, "Arial", 16, 320, Pos.BASELINE_LEFT, 50, 310);
+		label_PasswordsDoNotMatch.setPrefWidth(320);
+		label_PasswordsDoNotMatch.setMaxWidth(320);
+		label_PasswordsDoNotMatch.setWrapText(true);
+		label_PasswordsDoNotMatch.setTextFill(javafx.scene.paint.Color.RED);
+		
+		
+		// Position the assessment display of the various requirements components
+		setupLabelUI(label_Requirements, "Arial", 14, 300, Pos.BASELINE_LEFT, 475, 260);
+		setupLabelUI(label_UpperCase, "Arial", 12, 300, Pos.BASELINE_LEFT, 475, 290);
+		setupLabelUI(label_LowerCase, "Arial", 12, 300, Pos.BASELINE_LEFT, 475, 315);
+		setupLabelUI(label_NumericDigit, "Arial", 12, 300, Pos.BASELINE_LEFT, 475, 340);
+		setupLabelUI(label_SpecialChar, "Arial", 12, 300, Pos.BASELINE_LEFT, 475, 365);
+		setupLabelUI(label_LongEnough, "Arial", 12, 300, Pos.BASELINE_LEFT, 475, 390);
+	    
+		resetAssessments();	// This method is use after each change to establish an initial state
+		
 
 		setupButtonUI(button_Quit, "Dialog", 18, 250, Pos.CENTER, 300, 520);
 		button_Quit.setOnAction((_) -> {ControllerFirstAdmin.performQuit(); });
 
 		// Place all of the just-initialized GUI elements into the pane
 		theRootPane.getChildren().addAll(label_ApplicationTitle, label_TitleLine1,
-				label_TitleLine2, text_AdminUsername, text_AdminPassword1, 
-				text_AdminPassword2, button_AdminSetup, label_PasswordsDoNotMatch,
-				button_Quit);
+		        label_TitleLine2, text_AdminUsername, text_AdminPassword1, 
+		        text_AdminPassword2, button_AdminSetup, label_PasswordsDoNotMatch,
+		        label_Requirements, label_UpperCase, label_LowerCase, 
+		        label_NumericDigit, label_SpecialChar, label_LongEnough,
+		        button_Quit);
 	}
 	
+	/*******
+	 * <p> Title: resetAssessments - Used by all MVC components to reset widgets to a known state
+	 * </p>
+	 * 
+	 * <p> Description: This method resets the five password requirement assessment to their 
+	 * initial state of not satisfied.  During the evaluation process in the Model, the changes
+	 * the user makes can change one or more of these to satisfied and to the color green.
+	 * 
+	 */
+	
+	static protected void resetAssessments() {
+	    label_UpperCase.setText("At least one upper case letter - Not yet satisfied");
+	    label_UpperCase.setTextFill(Color.RED);
+	    
+	    label_LowerCase.setText("At least one lower case letter - Not yet satisfied");
+	    label_LowerCase.setTextFill(Color.RED);
+	    
+	    label_NumericDigit.setText("At least one numeric digit - Not yet satisfied");
+	    label_NumericDigit.setTextFill(Color.RED);
+	    
+	    label_SpecialChar.setText("At least one special character - Not yet satisfied");
+	    label_SpecialChar.setTextFill(Color.RED);
+	    
+	    label_LongEnough.setText("At least eight characters - Not yet satisfied");
+	    label_LongEnough.setTextFill(Color.RED);
+	}
 	
 	/*-********************************************************************************************
 

@@ -40,7 +40,8 @@ public class UserNameRecognizer {
 	private static int currentCharNdx;					// The index of the current character
 	private static boolean running;						// The flag that specifies if the FSM is 
 														// running
-	private static int userNameSize = 0;			// A numeric value may not exceed 16 characters
+	private static int userNameSize = 0;			
+	public static final int MAX_PASS_LENGTH = 32;		// Max username character length
 
 	// Private method to display debugging data
 	private static void displayDebuggingInfo() {
@@ -182,8 +183,8 @@ public class UserNameRecognizer {
 					running = false;
 
 				// The execution of this state is finished
-				// If the size is larger than 32, the loop must stop
-				if (userNameSize > 32)
+				// If the size is larger than MAX_PASS_LENGTH, the loop must stop
+				if (userNameSize > MAX_PASS_LENGTH)
 					running = false;
 				break;			
 			}
@@ -224,7 +225,7 @@ public class UserNameRecognizer {
 		switch (state) {
 		case 0:
 			// State 0 is not a final state, so we can return a very specific error message
-			userNameRecognizerErrorMessage += "A UserName must only start with A-Z, a-z.\n";
+			userNameRecognizerErrorMessage += "A UserName must only start with A-Z, a-z.";
 			return userNameRecognizerErrorMessage;
 
 		case 1:
@@ -233,19 +234,19 @@ public class UserNameRecognizer {
 
 			if (userNameSize < 4) {
 				// UserName is too small
-				userNameRecognizerErrorMessage += "A UserName must have at least 4 characters.\n";
+				userNameRecognizerErrorMessage += "A UserName must have at least 4 characters.";
 				return userNameRecognizerErrorMessage;
 			}
-			else if (userNameSize > 16) {
+			else if (userNameSize > MAX_PASS_LENGTH) {
 				// UserName is too long
 				userNameRecognizerErrorMessage += 
-					"A UserName must have no more than 16 characters.\n";
+					"A UserName must have no more than " + MAX_PASS_LENGTH + " characters.";
 				return userNameRecognizerErrorMessage;
 			}
 			else if (currentCharNdx < input.length()) {
 				// There are characters remaining in the input, so the input is not valid
 				userNameRecognizerErrorMessage += 
-					"A UserName character may only contain alphanumeric characters (A-Z, a-z, 0-9), or separators ('-', '_', '.', '&').\n";
+					"A UserName character may only contain alphanumeric characters (A-Z, a-z, 0-9), or separators ('-', '_', '.', '&').";
 				return userNameRecognizerErrorMessage;
 			}
 			else {
@@ -258,7 +259,7 @@ public class UserNameRecognizer {
 		case 2:
 			// State 2 is not a final state, so we can return a very specific error message
 			userNameRecognizerErrorMessage +=
-				"A UserName cannot end with a separator, and any '-', '_', '.', or '&' must be followed by an alphanumeric character (A-Z, a-z, 0-9).\n";
+				"A UserName cannot end with a separator, and any '-', '_', '.', or '&' must be followed by an alphanumeric character (A-Z, a-z, 0-9).";
 			return userNameRecognizerErrorMessage;
 			
 		default:
