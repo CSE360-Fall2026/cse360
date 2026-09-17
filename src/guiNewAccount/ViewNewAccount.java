@@ -13,6 +13,7 @@ import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import database.Database;
 import entityClasses.User;
+import javafx.scene.paint.Color;
 
 /*******
  * <p> Title: ViewNewAccount Class. </p>
@@ -24,8 +25,10 @@ import entityClasses.User;
  * <p> Copyright: Lynn Robert Carter © 2025 </p>
  * 
  * @author Lynn Robert Carter
+ * @author Virgil Jones & Team Fall 2026
  * 
  * @version 1.00		2025-08-19 Initial version
+ * @version 2.00		2026-09-16 Updated to implement username and password validation with dynamic updates
  *  
  */
 
@@ -78,6 +81,17 @@ public class ViewNewAccount {
     protected static String emailAddress;		// Established here for use by the controller
     protected static String theRole;			// Established here for use by the controller
 	public static Scene theNewAccountScene = null;	// Access to the User Update page's GUI Widgets
+	
+	// Password checklist
+	protected static Label label_PasswordsDoNotMatch = new Label();
+	static protected Label validPassword = new Label();		// This only appears with a valid password
+	static protected Label label_Requirements = 
+    		new Label("Password requirements:");
+	static protected Label label_UpperCase = new Label();		// These empty labels change based on the
+	static protected Label label_LowerCase = new Label();		// user's input
+	static protected Label label_NumericDigit = new Label();	
+	static protected Label label_SpecialChar = new Label();
+	static protected Label label_LongEnough = new Label();
 	
 
 	/*-********************************************************************************************
@@ -136,12 +150,17 @@ public class ViewNewAccount {
     	// Place all of the established GUI elements into the pane
     	theRootPane.getChildren().clear();
     	theRootPane.getChildren().addAll(label_NewUserCreation, label_NewUserLine, text_Username,
-    			text_Password1, text_Password2, button_UserSetup, button_Quit);    	
+                text_Password1, text_Password2, button_UserSetup, button_Quit,
+                label_PasswordsDoNotMatch, label_Requirements, label_UpperCase, label_LowerCase,
+                label_NumericDigit, label_SpecialChar, label_LongEnough);
+    	
+    	label_PasswordsDoNotMatch.setText("");
+    	resetAssessments();
 
 		// Set the title for the window, display the page, and wait for the Admin to do something
 		theStage.setTitle("CSE 360 Foundation Code: New User Account Setup");	
         theStage.setScene(theNewAccountScene);
-		theStage.show();
+;		theStage.show();
 	}
 	
 	/**********
@@ -171,11 +190,13 @@ public class ViewNewAccount {
 		
 		// Establish the text input operand asking for a username
 		setupTextUI(text_Username, "Arial", 18, 300, Pos.BASELINE_LEFT, 50, 160, true);
-		text_Username.setPromptText("Enter the Username");
+		text_Username.setPromptText("Enter a Username");
 		
 		// Establish the text input operand field for the password
 		setupTextUI(text_Password1, "Arial", 18, 300, Pos.BASELINE_LEFT, 50, 210, true);
-		text_Password1.setPromptText("Enter the Password");
+		text_Password1.setPromptText("Enter a Password");
+		text_Password1.textProperty().addListener((_, _, _) 
+	            -> { ControllerNewAccount.setNewAccountPassword(); });
 		
 		// Establish the text input operand field to confirm the password
 		setupTextUI(text_Password2, "Arial", 18, 300, Pos.BASELINE_LEFT, 50, 260, true);
@@ -194,11 +215,60 @@ public class ViewNewAccount {
         // Set up the account creation and login
         setupButtonUI(button_UserSetup, "Dialog", 18, 200, Pos.CENTER, 475, 210);
         button_UserSetup.setOnAction((_) -> {ControllerNewAccount.doCreateUser(); });
-		
+        
+        // Label to display the Passwords do not match error message
+ 		setupLabelUI(label_PasswordsDoNotMatch, "Arial", 16, 320, Pos.BASELINE_LEFT, 50, 310);
+ 		label_PasswordsDoNotMatch.setPrefWidth(320);
+ 		label_PasswordsDoNotMatch.setMaxWidth(320);
+ 		label_PasswordsDoNotMatch.setWrapText(true);
+ 		label_PasswordsDoNotMatch.setTextFill(javafx.scene.paint.Color.RED);
+ 		
+ 		// Position the assessment display of the various requirements components
+ 		setupLabelUI(label_Requirements, "Arial", 14, 300, Pos.BASELINE_LEFT, 475, 260);
+ 		setupLabelUI(label_UpperCase, "Arial", 12, 300, Pos.BASELINE_LEFT, 475, 290);
+ 		setupLabelUI(label_LowerCase, "Arial", 12, 300, Pos.BASELINE_LEFT, 475, 315);
+ 		setupLabelUI(label_NumericDigit, "Arial", 12, 300, Pos.BASELINE_LEFT, 475, 340);
+ 		setupLabelUI(label_SpecialChar, "Arial", 12, 300, Pos.BASELINE_LEFT, 475, 365);
+ 		setupLabelUI(label_LongEnough, "Arial", 12, 300, Pos.BASELINE_LEFT, 475, 390);
+ 	    
+ 		
         // Enable the user to quit the application
         setupButtonUI(button_Quit, "Dialog", 18, 250, Pos.CENTER, 300, 540);
         button_Quit.setOnAction((_) -> {ControllerNewAccount.performQuit(); });
+        
+        // Place all of the GUI elements into the pane
+    	theRootPane.getChildren().addAll(label_NewUserCreation, label_NewUserLine, text_Username,
+    			text_Password1, text_Password2, button_UserSetup, button_Quit,
+    			label_PasswordsDoNotMatch, label_Requirements, label_UpperCase, label_LowerCase,
+    			label_NumericDigit, label_SpecialChar, label_LongEnough);
 	}
+	
+		/*******
+		 * <p> Title: resetAssessments - Used by all MVC components to reset widgets to a known state
+		 * </p>
+		 * 
+		 * <p> Description: This method resets the five password requirement assessment to their 
+		 * initial state of not satisfied.  During the evaluation process in the Model, the changes
+		 * the user makes can change one or more of these to satisfied and to the color green.
+		 * 
+		 */
+		
+		static protected void resetAssessments() {
+		    label_UpperCase.setText("At least one upper case letter - Not yet satisfied");
+		    label_UpperCase.setTextFill(Color.RED);
+		    
+		    label_LowerCase.setText("At least one lower case letter - Not yet satisfied");
+		    label_LowerCase.setTextFill(Color.RED);
+		    
+		    label_NumericDigit.setText("At least one numeric digit - Not yet satisfied");
+		    label_NumericDigit.setTextFill(Color.RED);
+		    
+		    label_SpecialChar.setText("At least one special character - Not yet satisfied");
+		    label_SpecialChar.setTextFill(Color.RED);
+		    
+		    label_LongEnough.setText("At least eight characters - Not yet satisfied");
+		    label_LongEnough.setTextFill(Color.RED);
+		}
 	
 	
 	/*-********************************************************************************************

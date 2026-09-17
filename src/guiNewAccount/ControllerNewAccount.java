@@ -4,6 +4,9 @@ import java.sql.SQLException;
 
 import database.Database;
 import entityClasses.User;
+import javafx.scene.paint.Color;
+import inputValidation.UserNameRecognizer;
+import inputValidation.PasswordRecognizer;
 
 /*******
  * <p> Title: ControllerNewAccount Class. </p>
@@ -22,8 +25,10 @@ import entityClasses.User;
  * <p> Copyright: Lynn Robert Carter © 2025 </p>
  * 
  * @author Lynn Robert Carter
+ * @author Virgil Jones & Team Fall 2026
  * 
  * @version 1.00		2025-08-17 Initial version
+ * @version 2.00		2026-09-16 Updated to implement username and password validation with dynamic updates
  *  
  */
 
@@ -48,6 +53,54 @@ public class ControllerNewAccount {
 	
 	// Reference for the in-memory database so this package has access
 	private static Database theDatabase = applicationMain.FoundationsMain.database;
+	
+	/**********
+	 * <p> Method: setNewAccountPassword() </p>
+	 * 
+	 * <p> Description: This method is called when the user adds text to the password 1 field in
+	 * the View.</p>
+	 * 
+	 */
+	protected static void setNewAccountPassword() {
+		String pass1 = ViewNewAccount.text_Password1.getText();
+		ViewNewAccount.label_PasswordsDoNotMatch.setText("");
+		
+		ViewNewAccount.resetAssessments();
+		
+		// If input is empty, leave them red and return
+		if (pass1.isEmpty()) {
+			return;
+		}
+
+		// Evaluate the password to populate the flags
+		PasswordRecognizer.evaluatePassword(pass1);
+
+		// Check flags - turn satisfied items green
+		if (PasswordRecognizer.foundUpperCase) {
+			ViewNewAccount.label_UpperCase.setText("At least one upper case letter - Satisfied");
+			ViewNewAccount.label_UpperCase.setTextFill(Color.GREEN);
+		}
+
+		if (PasswordRecognizer.foundLowerCase) {
+			ViewNewAccount.label_LowerCase.setText("At least one lower case letter - Satisfied");
+			ViewNewAccount.label_LowerCase.setTextFill(Color.GREEN);
+		}
+
+		if (PasswordRecognizer.foundNumericDigit) {
+			ViewNewAccount.label_NumericDigit.setText("At least one numeric digit - Satisfied");
+			ViewNewAccount.label_NumericDigit.setTextFill(Color.GREEN);
+		}
+
+		if (PasswordRecognizer.foundSpecialChar) {
+			ViewNewAccount.label_SpecialChar.setText("At least one special character - Satisfied");
+			ViewNewAccount.label_SpecialChar.setTextFill(Color.GREEN);
+		}
+
+		if (PasswordRecognizer.foundLongEnough) {
+			ViewNewAccount.label_LongEnough.setText("At least eight characters - Satisfied");
+			ViewNewAccount.label_LongEnough.setTextFill(Color.GREEN);
+		}
+	}
 	
 	/**********
 	 * <p> Method: public doCreateUser() </p>
@@ -75,6 +128,20 @@ public class ControllerNewAccount {
 		// Initialize local variables that will be created during this process
 		int roleCode = 0;
 		User user = null;
+		
+		// Check that username is valid
+		String userErr = UserNameRecognizer.checkForValidUserName(username);
+		if (!userErr.isEmpty()) {
+			ViewNewAccount.label_PasswordsDoNotMatch.setText(userErr);
+			return; // Error occurred with username, stop from continuing
+		}
+
+		// Check that password is valid
+		String passErr = PasswordRecognizer.evaluatePassword(password);
+		if (!passErr.isEmpty()) {
+			ViewNewAccount.label_PasswordsDoNotMatch.setText(passErr);
+			return; // Error occurred with password, stop from continuing
+		}
 
 		// Make sure the two passwords are the same.	
 		if (ViewNewAccount.text_Password1.getText().
@@ -128,7 +195,8 @@ public class ControllerNewAccount {
 			// must be the same, and clear the message as soon as the first character is typed.
 			ViewNewAccount.text_Password1.setText("");
 			ViewNewAccount.text_Password2.setText("");
-			ViewNewAccount.alertUsernamePasswordError.showAndWait();
+			ViewNewAccount.label_PasswordsDoNotMatch.setText(
+					"The two passwords must match. Please try again!");
 		}
 	}
 
