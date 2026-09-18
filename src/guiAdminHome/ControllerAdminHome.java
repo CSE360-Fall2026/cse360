@@ -6,6 +6,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ChoiceDialog;
 import java.util.Optional;
+import java.util.ArrayList;
 import inputValidation.EmailAddressRecognizer;
 
 /*******
@@ -30,7 +31,7 @@ import inputValidation.EmailAddressRecognizer;
  * 
  * @version 1.00		2025-08-17 Initial version
  * @version 1.01		2025-09-16 Update Javadoc documentation *  
- * @version 2.00		2026-09-18 Shows list of use; email validation from EmailAddressRecognizer; delete a user
+ * @version 2.00		2026-09-18 Shows list of use; email validation from EmailAddressRecognizer; delete a user; one-time password
  */
 
 public class ControllerAdminHome {
@@ -119,12 +120,44 @@ public class ControllerAdminHome {
 	 * this function has not yet been implemented. </p>
 	 */
 	protected static void setOnetimePassword () {
-		System.out.println("\n*** WARNING ***: One-Time Password Not Yet Implemented");
-		ViewAdminHome.alertNotImplemented.setTitle("*** WARNING ***");
-		ViewAdminHome.alertNotImplemented.setHeaderText("One-Time Password Issue");
-		ViewAdminHome.alertNotImplemented.setContentText("One-Time Password Not Yet Implemented");
-		ViewAdminHome.alertNotImplemented.showAndWait();
-	}
+		// Fetch list from database
+		List<String> userList = theDatabase.getUserList();
+		
+				if (userList == null || userList.size() <= 1) {
+					ViewAdminHome.alertNotImplemented.setHeaderText("No Users");
+					ViewAdminHome.alertNotImplemented.setContentText("There are no registered users in the database.");
+					ViewAdminHome.alertNotImplemented.showAndWait();
+					return;
+				}
+				
+				// Create new list without the "<Select a User>"
+				List<String> users = new ArrayList<String>();
+				for (int i = 1; i < userList.size(); i++) {
+					users.add(userList.get(i));
+				}
+
+				ChoiceDialog<String> selectUser = new ChoiceDialog<String>("", users);
+				selectUser.setTitle("One-Time Password");
+				selectUser.setHeaderText("Generate One-Time Password");
+				selectUser.setContentText("Select a user:");
+
+				Optional<String> chosenUser = selectUser.showAndWait();
+				
+				if (chosenUser.isPresent()) {
+					String selectedUser = chosenUser.get();
+					String otp = theDatabase.generateOneTimePassword(selectedUser);
+					
+					// Message to user
+					String msg = "One-Time Password: " + otp + " was generated for user: " + selectedUser + ".";
+					System.out.println(msg);
+
+					Alert alert = new Alert(Alert.AlertType.INFORMATION);
+					alert.setTitle("One-Time Password Generated");
+					alert.setHeaderText("One-Time Password for " + selectedUser);
+					alert.setContentText(msg);					
+					alert.showAndWait();
+				}
+			}
 	
 	/**********
 	 * <p> 
@@ -139,7 +172,7 @@ public class ControllerAdminHome {
 		List<String> userList = theDatabase.getUserList();
 		ViewAdminHome.alertNotImplemented.setTitle("Delete User");
 		
-				// Check if userList is null or empty (remember this starts at 1)
+				// Check if userList is null or empty (this starts at 1 due to "<Select a User>")
 				if (userList == null || userList.size() <= 1) {
 					ViewAdminHome.alertNotImplemented.setHeaderText("No Users Available");
 					ViewAdminHome.alertNotImplemented.setContentText("There are no user accounts in the database.");
@@ -148,7 +181,7 @@ public class ControllerAdminHome {
 				}
 
 				// DO NOT SHOW CURRENT ADMIN USER IN LIST
-				List<String> safeUsers = new java.util.ArrayList<String>();	// create a new list
+				List<String> safeUsers = new ArrayList<String>();	// create a new list
 				// Add users that are not the current admin user to the list
 				for (int i = 1; i < userList.size(); i++) {
 					String user = userList.get(i);
