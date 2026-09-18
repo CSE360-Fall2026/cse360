@@ -1,6 +1,7 @@
 package guiAdminHome;
 
 import database.Database;
+import java.util.List;
 
 /*******
  * <p> Title: GUIAdminHomePage Class. </p>
@@ -20,9 +21,11 @@ import database.Database;
  * <p> Copyright: Lynn Robert Carter © 2025 </p>
  * 
  * @author Lynn Robert Carter
+ * @author Virgil Jones & Team Fall 2026
  * 
  * @version 1.00		2025-08-17 Initial version
  * @version 1.01		2025-09-16 Update Javadoc documentation *  
+ * @version 2.00		2026-09-18 Shows list of user
  */
 
 public class ControllerAdminHome {
@@ -143,10 +146,60 @@ public class ControllerAdminHome {
 	 * this function has not yet been implemented. </p>
 	 */
 	protected static void listUsers() {
-		System.out.println("\n*** WARNING ***: List Users Not Yet Implemented");
-		ViewAdminHome.alertNotImplemented.setTitle("*** WARNING ***");
-		ViewAdminHome.alertNotImplemented.setHeaderText("List User Issue");
-		ViewAdminHome.alertNotImplemented.setContentText("List Users Not Yet Implemented");
+		// Fetch list from database
+		List<String> userList = theDatabase.getUserList();
+		String infoText = "";
+		
+		if (userList != null) {
+			// Skip index 0 because it starts as "<Select a User>"
+			for (int i = 1; i < userList.size(); i++) {
+				String username = userList.get(i);
+				theDatabase.getUserAccountDetails(username);
+				
+				// Name set up
+				String first = theDatabase.getCurrentFirstName();
+				String last = theDatabase.getCurrentLastName();
+				String fullName = ((first == null ? "" : first) + " " + (last == null ? "" : last)).trim();
+				if (fullName.isEmpty()) {
+					fullName = "<none>";
+				}
+				
+				// Email set up
+				String email = theDatabase.getCurrentEmailAddress();
+				if (email == null || email.isEmpty()) {
+					email = "<none>";
+				}
+				
+				// Roles set up
+				String roles = "";
+				if (theDatabase.getCurrentAdminRole()) roles += "Admin, ";
+				if (theDatabase.getCurrentNewRole1()) roles += "Role1, ";
+				if (theDatabase.getCurrentNewRole2()) roles += "Role2, ";
+				
+				if (roles.endsWith(", ")) {
+					roles = roles.substring(0, roles.length() - 2);
+				}
+				if (roles.isEmpty()) {
+					roles = "<none>";
+				}
+				
+				// Output to the modal
+				infoText += i + ") Username: " + username + "  |  Name: " + fullName + "  |  Email: " + email + "  |  Roles: " + roles + "\n";
+			}
+		}
+		
+		if (infoText.isEmpty()) {
+			infoText = "No users found in the system.";
+		}
+		
+		ViewAdminHome.alertNotImplemented.setTitle("User Directory");
+		ViewAdminHome.alertNotImplemented.setHeaderText("Total List of Registered Users: (" + theDatabase.getNumberOfUsers() + ")");
+		ViewAdminHome.alertNotImplemented.setContentText(infoText.trim());
+		
+		// Pop-up modal resize to fit content
+		ViewAdminHome.alertNotImplemented.setResizable(true);
+		ViewAdminHome.alertNotImplemented.getDialogPane().setPrefSize(580, javafx.scene.layout.Region.USE_COMPUTED_SIZE);
+		
 		ViewAdminHome.alertNotImplemented.showAndWait();
 	}
 	
