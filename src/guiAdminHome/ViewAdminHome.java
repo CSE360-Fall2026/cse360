@@ -171,7 +171,11 @@ public class ViewAdminHome {
 		// state of the system.
 		theDatabase.getUserAccountDetails(user.getUserName());		// Fetch this user's data
 		applicationMain.FoundationsMain.activeHomePage = theRole;	// Set this as the active Home																	// UserUpdate page
-
+		
+		// Update number of user counter
+		label_NumberOfUsers.setText("Number of users: " + 
+				theDatabase.getNumberOfUsers());
+		
 		// Set the role for potential users to the default (No role selected)
 		combobox_SelectRole.getSelectionModel().select(0);
 				

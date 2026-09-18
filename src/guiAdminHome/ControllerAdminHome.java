@@ -2,6 +2,10 @@ package guiAdminHome;
 
 import database.Database;
 import java.util.List;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ChoiceDialog;
+import java.util.Optional;
 import inputValidation.EmailAddressRecognizer;
 
 /*******
@@ -26,7 +30,7 @@ import inputValidation.EmailAddressRecognizer;
  * 
  * @version 1.00		2025-08-17 Initial version
  * @version 1.01		2025-09-16 Update Javadoc documentation *  
- * @version 2.00		2026-09-18 Shows list of use; email validation from EmailAddressRecognizer
+ * @version 2.00		2026-09-18 Shows list of use; email validation from EmailAddressRecognizer; delete a user
  */
 
 public class ControllerAdminHome {
@@ -131,12 +135,68 @@ public class ControllerAdminHome {
 	 * this function has not yet been implemented. </p>
 	 */
 	protected static void deleteUser() {
-		System.out.println("\n*** WARNING ***: Delete User Not Yet Implemented");
-		ViewAdminHome.alertNotImplemented.setTitle("*** WARNING ***");
-		ViewAdminHome.alertNotImplemented.setHeaderText("Delete User Issue");
-		ViewAdminHome.alertNotImplemented.setContentText("Delete User Not Yet Implemented");
-		ViewAdminHome.alertNotImplemented.showAndWait();
-	}
+		// Fetch list from database
+		List<String> userList = theDatabase.getUserList();
+		ViewAdminHome.alertNotImplemented.setTitle("Delete User");
+		
+				// Check if userList is null or empty (remember this starts at 1)
+				if (userList == null || userList.size() <= 1) {
+					ViewAdminHome.alertNotImplemented.setHeaderText("No Users Available");
+					ViewAdminHome.alertNotImplemented.setContentText("There are no user accounts in the database.");
+					ViewAdminHome.alertNotImplemented.showAndWait();
+					return;
+				}
+
+				// DO NOT SHOW CURRENT ADMIN USER IN LIST
+				List<String> safeUsers = new java.util.ArrayList<String>();	// create a new list
+				// Add users that are not the current admin user to the list
+				for (int i = 1; i < userList.size(); i++) {
+					String user = userList.get(i);
+					if (!user.equals(ViewAdminHome.theUser.getUserName())) {
+						safeUsers.add(user);
+					}
+				}
+
+				// Check if new list created from database (without admin) is empty
+				if (safeUsers.isEmpty()) {
+					ViewAdminHome.alertNotImplemented.setHeaderText("No Users Available");
+					ViewAdminHome.alertNotImplemented.setContentText("There are no user accounts in the database.");
+					ViewAdminHome.alertNotImplemented.showAndWait();
+					return;
+				}
+
+				// Show dropdown selection for users
+				ChoiceDialog<String> selectUser = new ChoiceDialog<String>("", safeUsers);
+				selectUser.setHeaderText("Select a user to permanently delete");
+				selectUser.setContentText("User:");
+
+				Optional<String> chosenUser = selectUser.showAndWait();
+
+				// Confirmation to delete user
+				if (chosenUser.isPresent()) {
+					String targetUser = chosenUser.get();	// Selected user to delete
+
+					Alert confirmDelete = new Alert(Alert.AlertType.CONFIRMATION);
+					confirmDelete.setTitle("Confirm Deletion");
+					confirmDelete.setHeaderText("Delete user: " + targetUser + "?");
+					confirmDelete.setContentText("Are you sure you want to permanently delete this user? This cannot be undone.");
+
+					Optional<ButtonType> confirm = confirmDelete.showAndWait();
+
+					if (confirm.isPresent() && confirm.get() == ButtonType.OK) {
+						theDatabase.deleteUser(targetUser);
+
+						// Update user count on the admin home page
+						ViewAdminHome.label_NumberOfUsers.setText("Number of users: " + theDatabase.getNumberOfUsers());
+
+						// Success message
+						ViewAdminHome.alertNotImplemented.setTitle("Delete User");
+						ViewAdminHome.alertNotImplemented.setHeaderText("User Successfully Deleted");
+						ViewAdminHome.alertNotImplemented.setContentText("User '" + targetUser + "' has been removed from the database.");
+						ViewAdminHome.alertNotImplemented.showAndWait();
+					}
+				}
+			}
 	
 	/**********
 	 * <p> 
