@@ -12,6 +12,8 @@ import javafx.scene.layout.Pane;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import entityClasses.User;
+import inputValidation.NameInputRecognizer;
+import inputValidation.EmailAddressRecognizer;
 
 /*******
  * <p> Title: ViewUserUpdate Class. </p>
@@ -31,8 +33,10 @@ import entityClasses.User;
  * <p> Copyright: Lynn Robert Carter © 2025 </p>
  * 
  * @author Lynn Robert Carter
+ * @author Virgil Jones & Team Fall 2026
  * 
  * @version 1.01		2025-08-19 Initial version plus new internal documentation
+ * @version 2.00		2026-09-17 User input information has validation, and Preferred Name changed to Display Name
  *  
  */
 
@@ -66,7 +70,7 @@ public class ViewUserUpdate {
 	private static Label label_FirstName = new Label("First Name:");
 	private static Label label_MiddleName = new Label("Middle Name:");
 	private static Label label_LastName = new Label("Last Name:");
-	private static Label label_PreferredFirstName = new Label("Preferred First Name:");
+	private static Label label_PreferredFirstName = new Label("Display Name:");
 	private static Label label_EmailAddress = new Label("Email Address:");
 	
 	// These are dynamic labels and they change based on the user and user interactions.
@@ -85,7 +89,7 @@ public class ViewUserUpdate {
 	private static Button button_UpdateFirstName = new Button("Update First Name");
 	private static Button button_UpdateMiddleName = new Button("Update Middle Name");
 	private static Button button_UpdateLastName = new Button("Update Last Name");
-	private static Button button_UpdatePreferredFirstName = new Button("Update Preferred First Name");
+	private static Button button_UpdatePreferredFirstName = new Button("Update Display Name");
 	private static Button button_UpdateEmailAddress = new Button("Update Email Address");
 
 	// This button enables the user to finish working on this page and proceed to the user's home
@@ -181,9 +185,18 @@ public class ViewUserUpdate {
     	if (s == null || s.length() < 1)label_CurrentLastName.setText("<none>");
     	else label_CurrentLastName.setText(s);
         
-		s = theUser.getPreferredFirstName();
-    	if (s == null || s.length() < 1)label_CurrentPreferredFirstName.setText("<none>");
-    	else label_CurrentPreferredFirstName.setText(s);
+    	// Set the display name to default First + Last name, or the preferred name, or <none>
+    	s = theUser.getPreferredFirstName();
+		String first = theUser.getFirstName();
+		String last = theUser.getLastName();
+		String defaultDisplayName = (first + " " + last).trim();
+		if (s != null && s.length() > 0) {
+			label_CurrentPreferredFirstName.setText(s);
+		} else if (!defaultDisplayName.isEmpty()) {
+			label_CurrentPreferredFirstName.setText(defaultDisplayName);
+		} else {
+			label_CurrentPreferredFirstName.setText("<none>");
+		}
         
 		s = theUser.getEmailAddress();
     	if (s == null || s.length() < 1)label_CurrentEmailAddress.setText("<none>");
@@ -231,8 +244,8 @@ public class ViewUserUpdate {
 		dialogUpdateLastName.setTitle("Update Last Name");
 		dialogUpdateLastName.setHeaderText("Update your Last Name");
 		
-		dialogUpdatePreferredFirstName.setTitle("Update Preferred First Name");
-		dialogUpdatePreferredFirstName.setHeaderText("Update your Preferred First Name");
+		dialogUpdatePreferredFirstName.setTitle("Update Display Name");	// updated to be display name
+		dialogUpdatePreferredFirstName.setHeaderText("Update your Display Name");	// updated to be display name
 		
 		dialogUpdateEmailAddresss.setTitle("Update Email Address");
 		dialogUpdateEmailAddresss.setHeaderText("Update your Email Address");
@@ -260,70 +273,156 @@ public class ViewUserUpdate {
         setupLabelUI(label_FirstName, "Arial", 18, 190, Pos.BASELINE_RIGHT, 5, 200);
         setupLabelUI(label_CurrentFirstName, "Arial", 18, 260, Pos.BASELINE_LEFT, 200, 200);
         setupButtonUI(button_UpdateFirstName, "Dialog", 18, 275, Pos.CENTER, 500, 193);
-        button_UpdateFirstName.setOnAction((_) -> {result = dialogUpdateFirstName.showAndWait();
-        	result.ifPresent(_ -> theDatabase.updateFirstName(theUser.getUserName(), result.get()));
-        	theDatabase.getUserAccountDetails(theUser.getUserName());
-         	String newName = theDatabase.getCurrentFirstName();
-           	theUser.setFirstName(newName);
-        	if (newName == null || newName.length() < 1)label_CurrentFirstName.setText("<none>");
-        	else label_CurrentFirstName.setText(newName);
-         	});
+        button_UpdateFirstName.setOnAction((_) -> {
+            dialogUpdateFirstName.setHeaderText("Update your First Name");
+            result = dialogUpdateFirstName.showAndWait();
+            // Keep dialog open while being validated
+            while (result.isPresent()) {
+                String newFirstName = result.get().trim();
+                String err = NameInputRecognizer.checkForValidName(newFirstName, "First Name", false);
+                
+                // If error, update header with error message
+                if (!err.isEmpty()) {
+                    dialogUpdateFirstName.setHeaderText(err);
+                    result = dialogUpdateFirstName.showAndWait(); // reopen pop-uup with error
+                } else {
+                    // Valid input: update database
+                    theDatabase.updateFirstName(theUser.getUserName(), newFirstName);
+                    theDatabase.getUserAccountDetails(theUser.getUserName());
+                    String newName = theDatabase.getCurrentFirstName();
+                    theUser.setFirstName(newName);
+                    if (newName == null || newName.length() < 1) label_CurrentFirstName.setText("<none>");
+                    else label_CurrentFirstName.setText(newName);
+                    break;
+                }
+            }
+        });
                
         // Middle Name
         setupLabelUI(label_MiddleName, "Arial", 18, 190, Pos.BASELINE_RIGHT, 5, 250);
         setupLabelUI(label_CurrentMiddleName, "Arial", 18, 260, Pos.BASELINE_LEFT, 200, 250);
         setupButtonUI(button_UpdateMiddleName, "Dialog", 18, 275, Pos.CENTER, 500, 243);
-        button_UpdateMiddleName.setOnAction((_) -> {result = dialogUpdateMiddleName.showAndWait();
-    		result.ifPresent(_ -> theDatabase.updateMiddleName(theUser.getUserName(), result.get()));
-    		theDatabase.getUserAccountDetails(theUser.getUserName());
-    		String newName = theDatabase.getCurrentMiddleName();
-           	theUser.setMiddleName(newName);
-        	if (newName == null || newName.length() < 1)label_CurrentMiddleName.setText("<none>");
-        	else label_CurrentMiddleName.setText(newName);
-    		});
+        button_UpdateMiddleName.setOnAction((_) -> {
+	        dialogUpdateMiddleName.setHeaderText("Update your Middle Name");
+	        result = dialogUpdateMiddleName.showAndWait();
+	        // Keep dialog open while being validated
+	        while (result.isPresent()) {
+	            String newMiddleName = result.get().trim();
+	            String err = NameInputRecognizer.checkForValidName(newMiddleName, "Middle Name", false);
+	            
+	            // If error, update header with error message
+	            if (!err.isEmpty()) {
+	            	dialogUpdateMiddleName.setHeaderText(err);
+	                result = dialogUpdateMiddleName.showAndWait(); // reopen pop-uup with error
+	            } else {
+	                // Valid input: update database
+	                theDatabase.updateMiddleName(theUser.getUserName(), newMiddleName);
+	                theDatabase.getUserAccountDetails(theUser.getUserName());
+	                String newName = theDatabase.getCurrentMiddleName();
+	                theUser.setMiddleName(newName);
+	                if (newName == null || newName.length() < 1) label_CurrentMiddleName.setText("<none>");
+	                else label_CurrentMiddleName.setText(newName);
+	                break;
+	            }
+	        }
+	    });
         
         // Last Name
         setupLabelUI(label_LastName, "Arial", 18, 190, Pos.BASELINE_RIGHT, 5, 300);
         setupLabelUI(label_CurrentLastName, "Arial", 18, 260, Pos.BASELINE_LEFT, 200, 300);
         setupButtonUI(button_UpdateLastName, "Dialog", 18, 275, Pos.CENTER, 500, 293);
-        button_UpdateLastName.setOnAction((_) -> {result = dialogUpdateLastName.showAndWait();
-    		result.ifPresent(_ -> theDatabase.updateLastName(theUser.getUserName(), result.get()));
-    		theDatabase.getUserAccountDetails(theUser.getUserName());
-    		String newName = theDatabase.getCurrentLastName();
-           	theUser.setLastName(newName);
-      	if (newName == null || newName.length() < 1)label_CurrentLastName.setText("<none>");
-        	else label_CurrentLastName.setText(newName);
-    		});
+        button_UpdateLastName.setOnAction((_) -> {
+	        dialogUpdateLastName.setHeaderText("Update your Last Name");
+	        result = dialogUpdateLastName.showAndWait();
+	        // Keep dialog open while being validated
+	        while (result.isPresent()) {
+	            String newLastName = result.get().trim();
+	            String err = NameInputRecognizer.checkForValidName(newLastName, "Last Name", false);
+	            
+	            // If error, update header with error message
+	            if (!err.isEmpty()) {
+	            	dialogUpdateLastName.setHeaderText(err);
+	                result = dialogUpdateLastName.showAndWait(); // reopen pop-uup with error
+	            } else {
+	                // Valid input: update database
+	                theDatabase.updateLastName(theUser.getUserName(), newLastName);
+	                theDatabase.getUserAccountDetails(theUser.getUserName());
+	                String newName = theDatabase.getCurrentLastName();
+	                theUser.setLastName(newName);
+	                if (newName == null || newName.length() < 1) label_CurrentLastName.setText("<none>");
+	                else label_CurrentLastName.setText(newName);
+	                break;
+	            }
+	        }
+	    });
         
-        // Preferred First Name
+        // Display Name - Used to be Preferred First Name
         setupLabelUI(label_PreferredFirstName, "Arial", 18, 190, Pos.BASELINE_RIGHT, 
         		5, 350);
         setupLabelUI(label_CurrentPreferredFirstName, "Arial", 18, 260, Pos.BASELINE_LEFT, 
         		200, 350);
         setupButtonUI(button_UpdatePreferredFirstName, "Dialog", 18, 275, Pos.CENTER, 500, 343);
-        button_UpdatePreferredFirstName.setOnAction((_) -> 
-        	{result = dialogUpdatePreferredFirstName.showAndWait();
-    		result.ifPresent(_ -> 
-    		theDatabase.updatePreferredFirstName(theUser.getUserName(), result.get()));
-    		theDatabase.getUserAccountDetails(theUser.getUserName());
-    		String newName = theDatabase.getCurrentPreferredFirstName();
-           	theUser.setPreferredFirstName(newName);
-         	if (newName == null || newName.length() < 1)label_CurrentPreferredFirstName.setText("<none>");
-        	else label_CurrentPreferredFirstName.setText(newName);
-     		});
+        button_UpdatePreferredFirstName.setOnAction((_) -> {
+        	dialogUpdatePreferredFirstName.setHeaderText("Update your Display Name");
+            result = dialogUpdatePreferredFirstName.showAndWait();
+            // Keep dialog open while being validated
+            while (result.isPresent()) {
+                String newPrefferedName = result.get().trim();
+                String err = NameInputRecognizer.checkForValidName(newPrefferedName, "Display Name", false);
+                
+                // If error, update header with error message
+                if (!err.isEmpty()) {
+                	dialogUpdatePreferredFirstName.setHeaderText(err);
+                    result = dialogUpdatePreferredFirstName.showAndWait(); // reopen pop-uup with error
+                } else {
+                    // Valid input: update database
+                    theDatabase.updatePreferredFirstName(theUser.getUserName(), newPrefferedName);
+                    theDatabase.getUserAccountDetails(theUser.getUserName());
+                    String newName = theDatabase.getCurrentPreferredFirstName();
+                    theUser.setPreferredFirstName(newName);
+                    String firstName = (theUser.getFirstName() == null) ? "" : theUser.getFirstName();
+                    String lastName = (theUser.getLastName() == null) ? "" : theUser.getLastName();
+                    String defaultDisplayName = (firstName + " " + lastName).trim();
+                    if(newName != null && newName.length() > 0) {
+                    	label_CurrentPreferredFirstName.setText(newName);
+                    } else if (!defaultDisplayName.isEmpty()) {
+                    	label_CurrentPreferredFirstName.setText(defaultDisplayName);
+                    } else {
+                    	label_CurrentPreferredFirstName.setText("<none>");
+                    }
+                    break;
+                }
+            }
+        });
         
         // Email Address
         setupLabelUI(label_EmailAddress, "Arial", 18, 190, Pos.BASELINE_RIGHT, 5, 400);
         setupLabelUI(label_CurrentEmailAddress, "Arial", 18, 260, Pos.BASELINE_LEFT, 200, 400);
         setupButtonUI(button_UpdateEmailAddress, "Dialog", 18, 275, Pos.CENTER, 500, 393);
-        button_UpdateEmailAddress.setOnAction((_) -> {result = dialogUpdateEmailAddresss.showAndWait();
-    		result.ifPresent(_ -> theDatabase.updateEmailAddress(theUser.getUserName(), result.get()));
-    		theDatabase.getUserAccountDetails(theUser.getUserName());
-    		String newEmail = theDatabase.getCurrentEmailAddress();
-           	theUser.setEmailAddress(newEmail);
-        	if (newEmail == null || newEmail.length() < 1)label_CurrentEmailAddress.setText("<none>");
-        	else label_CurrentEmailAddress.setText(newEmail);
- 			});
+        button_UpdateEmailAddress.setOnAction((_) -> {
+        	dialogUpdateEmailAddresss.setHeaderText("Update your Email Address");
+	        result = dialogUpdateEmailAddresss.showAndWait();
+	        // Keep dialog open while being validated
+	        while (result.isPresent()) {
+	            String newEmail = result.get().trim();
+	            String err = EmailAddressRecognizer.checkEmailAddress(newEmail);
+	            
+	            // If error, update header with error message
+	            if (!err.isEmpty()) {
+	            	dialogUpdateEmailAddresss.setHeaderText(err);
+	                result = dialogUpdateEmailAddresss.showAndWait(); // reopen pop-uup with error
+	            } else {
+	                // Valid input: update database
+	                theDatabase.updateEmailAddress(theUser.getUserName(), newEmail);
+	                theDatabase.getUserAccountDetails(theUser.getUserName());
+	                String newName = theDatabase.getCurrentEmailAddress();
+	                theUser.setEmailAddress(newName);
+	                if (newName == null || newName.length() < 1) label_CurrentEmailAddress.setText("<none>");
+	                else label_CurrentEmailAddress.setText(newName);
+	                break;
+	            }
+	        }
+	    });
         
         // Set up the button to proceed to this user's home page
         setupButtonUI(button_ProceedToUserHomePage, "Dialog", 18, 300, 
