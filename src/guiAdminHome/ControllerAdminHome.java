@@ -2,6 +2,7 @@ package guiAdminHome;
 
 import database.Database;
 import java.util.List;
+import inputValidation.EmailAddressRecognizer;
 
 /*******
  * <p> Title: GUIAdminHomePage Class. </p>
@@ -25,7 +26,7 @@ import java.util.List;
  * 
  * @version 1.00		2025-08-17 Initial version
  * @version 1.01		2025-09-16 Update Javadoc documentation *  
- * @version 2.00		2026-09-18 Shows list of user
+ * @version 2.00		2026-09-18 Shows list of use; email validation from EmailAddressRecognizer
  */
 
 public class ControllerAdminHome {
@@ -231,9 +232,12 @@ public class ControllerAdminHome {
 	 * @param emailAddress	This String holds what is expected to be an email address
 	 */
 	protected static boolean invalidEmailAddress(String emailAddress) {
-		if (emailAddress.length() == 0) {
-			ViewAdminHome.alertEmailError.setContentText(
-					"Correct the email address and try again.");
+		// Check that the email address is valid
+		String err = EmailAddressRecognizer.checkEmailAddress(emailAddress.trim());
+		if (!err.isEmpty()) {
+			ViewAdminHome.alertEmailError.setTitle("Email Error");
+			ViewAdminHome.alertEmailError.setHeaderText("Invalid Email Address");
+			ViewAdminHome.alertEmailError.setContentText(err);
 			ViewAdminHome.alertEmailError.showAndWait();
 			return true;
 		}
