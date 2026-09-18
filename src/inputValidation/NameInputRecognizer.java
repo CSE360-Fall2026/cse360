@@ -84,11 +84,8 @@ public class NameInputRecognizer {
 				nameRecognizerIndexofError = 0;
 				return fieldName + " cannot be empty or blank.";
 			}
-		} else {
-			nameRecognizerIndexofError = -1;
-			nameRecognizerErrorMessage = "";
 			return "";
-		}
+		} 
 		
 		// The local variables used to perform the Finite State Machine simulation
 		state = 0;							// This is the FSM state number
