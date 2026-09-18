@@ -125,6 +125,12 @@ public class Database {
 	    		+ "emailAddress VARCHAR(255), "
 	            + "role VARCHAR(10))";
 	    statement.execute(invitationCodesTable);
+	    
+	    // Create the one-time passwords table
+ 		String otpTable = "CREATE TABLE IF NOT EXISTS OneTimePasswords ("
+ 				+ "code VARCHAR(10) PRIMARY KEY, "
+ 				+ "userName VARCHAR(255))";
+ 		statement.execute(otpTable);
 	}
 
 
@@ -403,6 +409,64 @@ public class Database {
 	        e.printStackTrace();
 	    }
 	    return code;
+	}
+	
+	/*******
+	 * <p> Method: String generateOneTimePassword(String username) </p>
+	 * 
+	 * <p> Description: Generates a temporary 8-character one-time password. </p>
+	 * 
+	 * @param username specifies the user that needs the temporary password
+	 * 
+	 * @return the code of 8 characters for the user to use to reset password
+	 */
+	// Generates a new temporary one-time password
+	public String generateOneTimePassword(String username) {
+		String code = UUID.randomUUID().toString().substring(0, 8);
+		String query = "INSERT INTO OneTimePasswords (code, userName) VALUES (?, ?)";
+		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+			pstmt.setString(1, code);
+			pstmt.setString(2, username);
+			pstmt.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return code;
+	}
+	
+	/*******
+	 * <p> Method: boolean isOneTimePasswordValid(String username, String code) </p>
+	 * 
+	 * <p> Description: Checks if an active one-time password exists for the user. </p>
+	 */
+	public boolean isOneTimePasswordValid(String username, String code) {
+		String query = "SELECT COUNT(*) AS count FROM OneTimePasswords WHERE code = ? AND userName = ?";
+		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+			pstmt.setString(1, code);
+			pstmt.setString(2, username);
+			ResultSet rs = pstmt.executeQuery();
+			if (rs.next()) {
+				return rs.getInt("count") > 0;
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+	
+	/*******
+	 * <p> Method: void clearOneTimePassword(String code) </p>
+	 * 
+	 * <p> Description: Deletes the one-time password once used.</p>
+	 */
+	public void clearOneTimePassword(String code) {
+		String query = "DELETE FROM OneTimePasswords WHERE code = ?";
+		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+			pstmt.setString(1, code);
+			pstmt.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
 
 	
@@ -924,6 +988,21 @@ public class Database {
 		return false;
 	}
 	
+	/*******
+	 * <p> Method: void updatePassword(String username, String newPassword) </p>
+	 * 
+	 * <p> Description: Update the password a user. </p>
+	 */
+	public void updatePassword(String username, String newPassword) {
+		String query = "UPDATE userDB SET password = ? WHERE userName = ?";
+		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+			pstmt.setString(1, newPassword);
+			pstmt.setString(2, username);
+			pstmt.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
 	
 	// Attribute getters for the current user
 	/*******

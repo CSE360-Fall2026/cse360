@@ -3,6 +3,19 @@ package guiUserLogin;
 import database.Database;
 import entityClasses.User;
 import javafx.stage.Stage;
+import javafx.geometry.Insets;
+import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.stage.Modality;
+import inputValidation.PasswordRecognizer;
+
 
 /*******
  * <p> Title: ControllerUserLogin Class. </p>
@@ -23,9 +36,11 @@ import javafx.stage.Stage;
  * <p> Copyright: Lynn Robert Carter © 2025 </p>
  * 
  * @author Lynn Robert Carter
+ * @author Virgil Jones & Team Fall 2026
  * 
  * @version 1.00		2025-08-17 Initial version
  * @version 1.01		2025-09-16 Update Javadoc documentation *  
+ * @version 2.00		2026-09-18 Add one-time password check with a required password reset before log in
  */
 
 public class ControllerUserLogin {
@@ -68,6 +83,91 @@ public class ControllerUserLogin {
 		String password = ViewUserLogin.text_Password.getText();
     	boolean loginResult = false;
     	
+    	// Check if the user is logging in using an active one-time password
+		if (theDatabase.isOneTimePasswordValid(username, password)) {
+			theDatabase.clearOneTimePassword(password);
+
+			// Create modal
+			Stage resetModal = new Stage();
+			resetModal.initModality(Modality.APPLICATION_MODAL);
+			resetModal.initOwner(theStage);
+			resetModal.setTitle("Reset Password");
+			
+			// Set layout width and padding
+			VBox layout = new VBox(10);
+			layout.setPadding(new Insets(20));
+			layout.setPrefWidth(420);
+
+			Label titleLabel = new Label("Enter a new password for: " + username);
+			titleLabel.setFont(Font.font("Arial", 16));
+
+			PasswordField passField = new PasswordField();
+			passField.setPromptText("New Password");
+
+			PasswordField confirmField = new PasswordField();
+			confirmField.setPromptText("Confirm New Password");
+
+			Label errorLabel = new Label();
+			errorLabel.setTextFill(Color.RED);
+
+			// Password checklist requirement labels
+			Label req = new Label("Password requirements:");
+			Label upper = new Label("At least one upper case letter");
+			Label lower = new Label("At least one lower case letter");
+			Label digit = new Label("At least one numeric digit");
+			Label special = new Label("At least one special character");
+			Label length = new Label("At least eight characters");
+			
+			upper.setTextFill(Color.RED);
+			lower.setTextFill(Color.RED);
+			digit.setTextFill(Color.RED);
+			special.setTextFill(Color.RED);
+			length.setTextFill(Color.RED);
+
+			// Dynamic listener
+			passField.textProperty().addListener((_, _, newVal) -> {
+				PasswordRecognizer.evaluatePassword(newVal);
+
+				upper.setTextFill(PasswordRecognizer.foundUpperCase ? Color.GREEN : Color.RED);
+				lower.setTextFill(PasswordRecognizer.foundLowerCase ? Color.GREEN : Color.RED);
+				digit.setTextFill(PasswordRecognizer.foundNumericDigit ? Color.GREEN : Color.RED);
+				special.setTextFill(PasswordRecognizer.foundSpecialChar ? Color.GREEN : Color.RED);
+				length.setTextFill(PasswordRecognizer.foundLongEnough ? Color.GREEN : Color.RED);
+			});
+
+			Button saveBtn = new Button("Save New Password");
+			saveBtn.setOnAction((_) -> {
+				String newPass = passField.getText();
+				String confirmPass = confirmField.getText();
+
+				String passErr = PasswordRecognizer.evaluatePassword(newPass);
+				if (!passErr.isEmpty()) {
+					errorLabel.setText(passErr);
+					return;
+				}
+				if (!newPass.equals(confirmPass)) {
+					errorLabel.setText("Passwords do not match. Try again!");
+					return;
+				}
+
+				theDatabase.updatePassword(username, newPass);
+				resetModal.close();
+
+				ViewUserLogin.text_Password.setText("");
+				Alert alert = new Alert(AlertType.INFORMATION);
+				alert.setTitle("Password Reset");
+				alert.setHeaderText("Password Successfully Updated");
+				alert.setContentText("Your password has been updated.\n Please log in using your new password.");
+				alert.showAndWait();
+			});
+
+			layout.getChildren().addAll(titleLabel, passField, confirmField, errorLabel, req, upper, lower, digit, special, length, saveBtn);
+
+			resetModal.setScene(new Scene(layout));
+			resetModal.showAndWait();
+			return;
+		}
+
 		// Fetch the user and verify the username
      	if (theDatabase.getUserAccountDetails(username) == false) {
      		// Don't provide too much information.  Don't say the username is invalid or the
