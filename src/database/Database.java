@@ -542,6 +542,25 @@ public class Database {
 		return;
 	}
 	
+	/*******
+	 * <p> Method: boolean deleteUser(String username) </p>
+	 * 
+	 * <p> Description: Delete a user from the database.</p>
+	 * 
+	 * @param username of the user to be deleted
+	 * 
+	 */
+	// Delete user from database using their username
+	public void deleteUser(String username) {
+		String query = "DELETE FROM userDB WHERE userName = ?";
+		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+			pstmt.setString(1, username);
+			pstmt.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	
 	/*******
 	 * <p> Method: String getFirstName(String username) </p>
