@@ -139,8 +139,13 @@ public class ControllerAddRemoveRoles {
 		// not show a role to remove that the user does not have!)
 		ViewAddRemoveRoles.removeList.clear();
 		ViewAddRemoveRoles.removeList.add("<Select a role>");
-		if (theDatabase.getCurrentAdminRole())
+		
+		// Get current user
+		boolean currentUser = ViewAddRemoveRoles.theSelectedUser.equals(ViewAddRemoveRoles.theUser.getUserName());
+		// If current user: do no show option to remove admin role
+		if (theDatabase.getCurrentAdminRole() && !currentUser)
 			ViewAddRemoveRoles.removeList.add("Admin");
+		
 		if (theDatabase.getCurrentNewRole1())
 			ViewAddRemoveRoles.removeList.add("Role1");
 		if (theDatabase.getCurrentNewRole2())
