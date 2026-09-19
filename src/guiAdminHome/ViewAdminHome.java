@@ -167,8 +167,10 @@ public class ViewAdminHome {
 		// If not yet established, populate the static aspects of the GUI
 		if (theView == null) theView = new ViewAdminHome();		// Instantiate singleton if needed
 		
+		
 		// Populate the dynamic aspects of the GUI with the data from the user and the current
 		// state of the system.
+		label_UserDetails.setText("User: " + theUser.getUserName());
 		theDatabase.getUserAccountDetails(user.getUserName());		// Fetch this user's data
 		applicationMain.FoundationsMain.activeHomePage = theRole;	// Set this as the active Home																	// UserUpdate page
 		
