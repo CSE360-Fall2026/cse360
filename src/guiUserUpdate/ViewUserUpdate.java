@@ -89,7 +89,7 @@ public class ViewUserUpdate {
 	private static Button button_UpdateFirstName = new Button("Update First Name");
 	private static Button button_UpdateMiddleName = new Button("Update Middle Name");
 	private static Button button_UpdateLastName = new Button("Update Last Name");
-	private static Button button_UpdatePreferredFirstName = new Button("Update Display Name");
+	// private static Button button_UpdatePreferredFirstName = new Button("Update Display Name");
 	private static Button button_UpdateEmailAddress = new Button("Update Email Address");
 
 	// This button enables the user to finish working on this page and proceed to the user's home
@@ -186,17 +186,7 @@ public class ViewUserUpdate {
     	else label_CurrentLastName.setText(s);
         
     	// Set the display name to default First + Last name, or the preferred name, or <none>
-    	s = theUser.getPreferredFirstName();
-		String first = theUser.getFirstName();
-		String last = theUser.getLastName();
-		String defaultDisplayName = (first + " " + last).trim();
-		if (s != null && s.length() > 0) {
-			label_CurrentPreferredFirstName.setText(s);
-		} else if (!defaultDisplayName.isEmpty()) {
-			label_CurrentPreferredFirstName.setText(defaultDisplayName);
-		} else {
-			label_CurrentPreferredFirstName.setText("<none>");
-		}
+		refreshDisplayName();
         
 		s = theUser.getEmailAddress();
     	if (s == null || s.length() < 1)label_CurrentEmailAddress.setText("<none>");
@@ -275,7 +265,13 @@ public class ViewUserUpdate {
         setupButtonUI(button_UpdateFirstName, "Dialog", 18, 275, Pos.CENTER, 500, 193);
         button_UpdateFirstName.setOnAction((_) -> {
             dialogUpdateFirstName.setHeaderText("Update your First Name");
+            
+            // Clear input and fill with current users name
+            String currentUser = (theUser.getFirstName() == null) ? "" : theUser.getFirstName();
+            dialogUpdateFirstName.getEditor().setText(currentUser);
+            
             result = dialogUpdateFirstName.showAndWait();
+            
             // Keep dialog open while being validated
             while (result.isPresent()) {
                 String newFirstName = result.get().trim();
@@ -293,6 +289,7 @@ public class ViewUserUpdate {
                     theUser.setFirstName(newName);
                     if (newName == null || newName.length() < 1) label_CurrentFirstName.setText("<none>");
                     else label_CurrentFirstName.setText(newName);
+                    refreshDisplayName();
                     break;
                 }
             }
@@ -304,7 +301,13 @@ public class ViewUserUpdate {
         setupButtonUI(button_UpdateMiddleName, "Dialog", 18, 275, Pos.CENTER, 500, 243);
         button_UpdateMiddleName.setOnAction((_) -> {
 	        dialogUpdateMiddleName.setHeaderText("Update your Middle Name");
+	        
+	        // Clear input and fill with current users name
+            String currentUser = (theUser.getMiddleName() == null) ? "" : theUser.getMiddleName();
+            dialogUpdateMiddleName.getEditor().setText(currentUser);
+            
 	        result = dialogUpdateMiddleName.showAndWait();
+	        
 	        // Keep dialog open while being validated
 	        while (result.isPresent()) {
 	            String newMiddleName = result.get().trim();
@@ -333,7 +336,13 @@ public class ViewUserUpdate {
         setupButtonUI(button_UpdateLastName, "Dialog", 18, 275, Pos.CENTER, 500, 293);
         button_UpdateLastName.setOnAction((_) -> {
 	        dialogUpdateLastName.setHeaderText("Update your Last Name");
+	        
+	        // Clear input and fill with current users name
+            String currentUser = (theUser.getLastName() == null) ? "" : theUser.getLastName();
+            dialogUpdateLastName.getEditor().setText(currentUser);
+            
 	        result = dialogUpdateLastName.showAndWait();
+	        
 	        // Keep dialog open while being validated
 	        while (result.isPresent()) {
 	            String newLastName = result.get().trim();
@@ -351,6 +360,7 @@ public class ViewUserUpdate {
 	                theUser.setLastName(newName);
 	                if (newName == null || newName.length() < 1) label_CurrentLastName.setText("<none>");
 	                else label_CurrentLastName.setText(newName);
+	                refreshDisplayName();
 	                break;
 	            }
 	        }
@@ -361,6 +371,9 @@ public class ViewUserUpdate {
         		5, 350);
         setupLabelUI(label_CurrentPreferredFirstName, "Arial", 18, 260, Pos.BASELINE_LEFT, 
         		200, 350);
+        /*
+         * Disabled display name validation or user input change. Should default to first and last name.
+         * 
         setupButtonUI(button_UpdatePreferredFirstName, "Dialog", 18, 275, Pos.CENTER, 500, 343);
         button_UpdatePreferredFirstName.setOnAction((_) -> {
         	dialogUpdatePreferredFirstName.setHeaderText("Update your Display Name");
@@ -394,6 +407,9 @@ public class ViewUserUpdate {
                 }
             }
         });
+        */
+        
+        
         
         // Email Address
         setupLabelUI(label_EmailAddress, "Arial", 18, 190, Pos.BASELINE_RIGHT, 5, 400);
@@ -401,7 +417,13 @@ public class ViewUserUpdate {
         setupButtonUI(button_UpdateEmailAddress, "Dialog", 18, 275, Pos.CENTER, 500, 393);
         button_UpdateEmailAddress.setOnAction((_) -> {
         	dialogUpdateEmailAddresss.setHeaderText("Update your Email Address");
+        	
+        	// Clear input and fill with current users name
+        	String currentEmail = (theUser.getEmailAddress() == null) ? "" : theUser.getEmailAddress();
+            dialogUpdateEmailAddresss.getEditor().setText(currentEmail);
+            
 	        result = dialogUpdateEmailAddresss.showAndWait();
+	        
 	        // Keep dialog open while being validated
 	        while (result.isPresent()) {
 	            String newEmail = result.get().trim();
@@ -431,6 +453,7 @@ public class ViewUserUpdate {
         	{ControllerUserUpdate.goToUserHomePage(theStage, theUser);});
     	
         // Populate the Pane's list of children widgets
+        // Removed "button_UpdatePreferredFirstName" - No longer setting a preferred name or display name
         theRootPane.getChildren().addAll(
         		label_ApplicationTitle, label_Purpose, label_Username,
         		label_CurrentUsername, 
@@ -440,9 +463,27 @@ public class ViewUserUpdate {
         		label_MiddleName, label_CurrentMiddleName, button_UpdateMiddleName,
         		label_LastName, label_CurrentLastName, button_UpdateLastName,
         		label_PreferredFirstName, label_CurrentPreferredFirstName,
-        		button_UpdatePreferredFirstName, button_UpdateEmailAddress,
+        		button_UpdateEmailAddress,
         		label_EmailAddress, label_CurrentEmailAddress, 
         		button_ProceedToUserHomePage);
+	}
+	
+	// Display name auto update
+	// Default to first and last name
+    protected static void refreshDisplayName() {
+    	String firstName = (theUser.getFirstName() == null) ? "" : theUser.getFirstName();
+        String lastName = (theUser.getLastName() == null) ? "" : theUser.getLastName();
+        String defaultDisplayName = (firstName + " " + lastName).trim();
+        
+        if(defaultDisplayName.isEmpty()) {
+        	label_CurrentPreferredFirstName.setText("<none>");
+        } else {
+        	label_CurrentPreferredFirstName.setText(defaultDisplayName);
+        }
+      		
+		// Update database with updated display name
+		theUser.setPreferredFirstName(defaultDisplayName);
+		theDatabase.updatePreferredFirstName(theUser.getUserName(), defaultDisplayName);
 	}
 	
 	
