@@ -14,6 +14,14 @@ import javafx.stage.Stage;
 import entityClasses.User;
 import inputValidation.NameInputRecognizer;
 import inputValidation.EmailAddressRecognizer;
+import javafx.geometry.Insets;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.PasswordField;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.stage.Modality;
+import inputValidation.PasswordRecognizer;
 
 /*******
  * <p> Title: ViewUserUpdate Class. </p>
@@ -36,7 +44,8 @@ import inputValidation.EmailAddressRecognizer;
  * @author Virgil Jones & Team Fall 2026
  * 
  * @version 1.01		2025-08-19 Initial version plus new internal documentation
- * @version 2.00		2026-09-17 User input information has validation, and Preferred Name changed to Display Name
+ * @version 2.00		2026-09-17 User input information has validation, and Preferred Name changed to Display Name, 
+ * 									Email update validation, Password change and validation
  *  
  */
 
@@ -258,6 +267,90 @@ public class ViewUserUpdate {
         setupLabelUI(label_Password, "Arial", 18, 190, Pos.BASELINE_RIGHT, 5, 150);
         setupLabelUI(label_CurrentPassword, "Arial", 18, 260, Pos.BASELINE_LEFT, 200, 150);
         setupButtonUI(button_UpdatePassword, "Dialog", 18, 275, Pos.CENTER, 500, 143);
+        // Password updater (same function as the password reset on login page)
+        button_UpdatePassword.setOnAction((_) -> {
+        	// Create modal
+            Stage resetModal = new Stage();
+            resetModal.initModality(Modality.APPLICATION_MODAL);
+            resetModal.initOwner(theStage);
+            resetModal.setTitle("Update Password");
+
+         	// Set layout width and padding
+            VBox layout = new VBox(10);
+            layout.setPadding(new Insets(20));
+            layout.setPrefWidth(420);
+
+            Label titleLabel = new Label("Update Password for: " + theUser.getUserName());
+            titleLabel.setFont(Font.font("Arial", 16));
+
+            PasswordField passField = new PasswordField();
+            passField.setPromptText("New Password");
+
+            PasswordField confirmField = new PasswordField();
+            confirmField.setPromptText("Confirm New Password");
+
+            Label errorLabel = new Label();
+            errorLabel.setTextFill(Color.RED);
+
+            // Password checklist requirement labels
+            Label req = new Label("Password requirements:");
+            Label upper = new Label("At least one upper case letter");
+            Label lower = new Label("At least one lower case letter");
+            Label digit = new Label("At least one numeric digit");
+            Label special = new Label("At least one special character");
+            Label length = new Label("At least eight characters");
+
+            upper.setTextFill(Color.RED);
+            lower.setTextFill(Color.RED);
+            digit.setTextFill(Color.RED);
+            special.setTextFill(Color.RED);
+            length.setTextFill(Color.RED);
+
+            // Dynamic listener
+            passField.textProperty().addListener((_, _, newVal) -> {
+                PasswordRecognizer.evaluatePassword(newVal);
+
+                upper.setTextFill(PasswordRecognizer.foundUpperCase ? Color.GREEN : Color.RED);
+                lower.setTextFill(PasswordRecognizer.foundLowerCase ? Color.GREEN : Color.RED);
+                digit.setTextFill(PasswordRecognizer.foundNumericDigit ? Color.GREEN : Color.RED);
+                special.setTextFill(PasswordRecognizer.foundSpecialChar ? Color.GREEN : Color.RED);
+                length.setTextFill(PasswordRecognizer.foundLongEnough ? Color.GREEN : Color.RED);
+            });
+
+            Button saveBtn = new Button("Save New Password");
+            saveBtn.setOnAction((_) -> {
+                String newPass = passField.getText();
+                String confirmPass = confirmField.getText();
+
+                String passErr = PasswordRecognizer.evaluatePassword(newPass);
+                if (!passErr.isEmpty()) {
+                    errorLabel.setText(passErr);
+                    return;
+                }
+                if (!newPass.equals(confirmPass)) {
+                    errorLabel.setText("Passwords do not match. Try again!");
+                    return;
+                }
+
+                // Update database
+                theDatabase.updatePassword(theUser.getUserName(), newPass);
+                theUser.setPassword(newPass);
+                label_CurrentPassword.setText(newPass);
+
+                resetModal.close();
+
+                Alert alert = new Alert(AlertType.INFORMATION);
+                alert.setTitle("Password Updated");
+                alert.setHeaderText("Password Successfully Saved");
+                alert.setContentText("Your password has been updated.");
+                alert.showAndWait();
+            });
+
+            layout.getChildren().addAll(titleLabel, passField, confirmField, errorLabel, req, upper, lower, digit, special, length, saveBtn);
+
+            resetModal.setScene(new Scene(layout));
+            resetModal.showAndWait();
+        });       
         
         // First Name
         setupLabelUI(label_FirstName, "Arial", 18, 190, Pos.BASELINE_RIGHT, 5, 200);
